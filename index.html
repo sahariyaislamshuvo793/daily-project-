@@ -3,418 +3,300 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fieldwork OS Pro - Advanced Tracker</title>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <title>Bangladeshi Carrom Board Game</title>
     <style>
-        :root {
-            --bg: #0b0f19;
-            --surface: #151c2c;
-            --surface-hover: #1e293b;
-            --border: #2e3a52;
-            --primary: #3b82f6;
-            --primary-glow: rgba(59, 130, 246, 0.25);
-            --success: #10b981;
-            --purple: #a855f7;
-            --amber: #f59e0b;
-            --danger: #ef4444;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-
         body {
-            background-color: var(--bg);
-            color: var(--text-main);
-            min-height: 100vh;
-            padding: 24px;
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.12) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.08) 0px, transparent 50%);
-        }
-
-        .layout {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: grid;
-            gap: 24px;
-        }
-
-        .top-bar {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            padding: 20px 28px;
-            border-radius: 16px;
+            background-color: #2c1d11;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
         }
 
-        .brand { display: flex; align-items: center; gap: 12px; }
-        .brand-icon {
-            background: linear-gradient(135deg, var(--primary), var(--purple));
-            width: 42px; height: 42px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center; color: white;
+        h1 {
+            margin-bottom: 10px;
+            color: #f39c12;
+            text-shadow: 2px 2px 4px #000;
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
+        p {
+            margin-top: 0;
+            color: #bdc3c7;
         }
 
-        .stat-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 20px;
+        /* ক্যারম বোর্ডের বাইরের ফ্রেম */
+        #board-container {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            background: #d2b48c; /* ক্যারম বোর্ডের মূল রঙ */
+            border: 20px solid #5c3a21; /* কাঠের বর্ডার */
+            border-radius: 12px;
+            box-shadow: 0px 10px 30px rgba(0,0,0,0.8);
         }
 
-        .stat-value { font-size: 26px; font-weight: 800; margin-top: 8px; }
-
-        .main-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 28px;
+        canvas {
+            display: block;
         }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-
-        .field-group { display: flex; flex-direction: column; gap: 8px; }
-        .full-width { grid-column: 1 / -1; }
-
-        label { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); }
-
-        input, select {
-            background: #0f1523;
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 12px 16px;
-            border-radius: 10px;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .chip-group {
-            display: flex; flex-wrap: wrap; gap: 8px;
-            background: #0f1523; padding: 10px;
-            border: 1px solid var(--border); border-radius: 10px;
-        }
-
-        .chip {
-            background: var(--surface-hover);
-            border: 1px solid var(--border);
-            padding: 6px 12px; border-radius: 8px;
-            font-size: 12px; cursor: pointer;
-        }
-
-        .chip.active { background: var(--primary); border-color: var(--primary); color: white; }
-
-        .actions { grid-column: 1 / -1; display: flex; gap: 12px; margin-top: 10px; }
-
-        .btn {
-            padding: 14px 24px; border-radius: 10px;
-            font-weight: 600; cursor: pointer; border: none;
-            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .btn-primary { background: var(--primary); color: white; flex: 2; }
-        .btn-success { background: var(--success); color: white; flex: 1; }
-        .btn-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid var(--danger); }
-
-        .table-card {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 20px; padding: 24px; overflow-x: auto;
-        }
-
-        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
-        th, td { padding: 12px 14px; border-bottom: 1px solid var(--border); }
-        th { background: #0f1523; color: var(--text-muted); }
-        .tag { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; border: 1px solid var(--border); margin: 2px; display: inline-block; }
     </style>
 </head>
 <body>
 
-<div class="layout">
-    <div class="top-bar">
-        <div class="brand">
-            <div class="brand-icon"><i data-lucide="wallet"></i></div>
-            <div>
-                <h1 style="font-size:18px;">Fieldwork OS Pro</h1>
-                <p style="font-size:12px; color:var(--text-muted);">Advance & Daily Expense Tracker</p>
-            </div>
-        </div>
-        <div id="liveDate" style="color:var(--text-muted); font-size:13px;">Today</div>
+    <h1>🎮 আসল বাংলা ক্যারম বোর্ড</h1>
+    <p>স্ট্রাইকার ক্লিক করে টেনে ধরে ছেড়ে দাও (Drag & Release to Shoot)</p>
+
+    <div id="board-container">
+        <canvas id="carromCanvas" width="500" height="500"></canvas>
     </div>
 
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div style="color:var(--text-muted); font-size:12px;">মোট এন্ট্রি</div>
-            <div class="stat-value" id="statEntries">0</div>
-        </div>
-        <div class="stat-card">
-            <div style="color:var(--text-muted); font-size:12px;">মোট এডভান্স (Advance)</div>
-            <div class="stat-value" style="color:var(--amber);" id="statAdvance">0 ৳</div>
-        </div>
-        <div class="stat-card">
-            <div style="color:var(--text-muted); font-size:12px;">মোট যাতায়াত খরচ</div>
-            <div class="stat-value" id="statVara">0 ৳</div>
-        </div>
-        <div class="stat-card">
-            <div style="color:var(--text-muted); font-size:12px;">মোট ইনকাম</div>
-            <div class="stat-value" style="color:var(--success);" id="statIncome">0 ৳</div>
-        </div>
-    </div>
+    <script>
+        const canvas = document.getElementById('carromCanvas');
+        const ctx = canvas.getContext('2d');
 
-    <div class="main-card">
-        <form id="proForm">
-            <div class="form-grid">
-                <div class="field-group full-width">
-                    <label>🏢 Company Name:</label>
-                    <div class="chip-group" id="companyChips">
-                        <div class="chip" data-val="Luminaries Recharge Ltd">Luminaries Recharge Ltd</div>
-                        <div class="chip" data-val="Insight Recharge Ltd">Insight Recharge Ltd</div>
-                        <div class="chip" data-val="Arrowhead Recharge Ltd">Arrowhead Recharge Ltd</div>
-                        <div class="chip" data-val="IRC Recharge Ltd">IRC Recharge Ltd</div>
-                        <div class="chip" data-val="GRM Recharge Limited">GRM Recharge Limited</div>
-                        <div class="chip" data-val="NSearch Recharge">NSearch Recharge</div>
-                    </div>
-                </div>
+        const BOARD_SIZE = 500;
+        const POCKET_RADIUS = 22;
+        const GUTI_RADIUS = 12;
+        const STRIKER_RADIUS = 16;
 
-                <div class="field-group full-width">
-                    <label>📱 Apps Used:</label>
-                    <div class="chip-group" id="appChips">
-                        <div class="chip" data-val="KoboCollect">KoboCollect</div>
-                        <div class="chip" data-val="ODK Collect">ODK Collect</div>
-                        <div class="chip" data-val="SmartSurvey">SmartSurvey</div>
-                        <div class="chip" data-val="SurveyToGo">SurveyToGo</div>
-                        <div class="chip" data-val="SurveyCTO">SurveyCTO</div>
-                    </div>
-                </div>
+        let gutis = [];
+        let striker = { x: 250, y: 410, vx: 0, vy: 0, isDragging: false };
+        let dragStart = { x: 0, y: 0 };
 
-                <div class="field-group">
-                    <label>📌 Project Name</label>
-                    <input type="text" id="projectName" placeholder="প্রজেক্টের নাম..." required>
-                </div>
+        // ৪টি পকেটের পজিশন
+        const pockets = [
+            { x: 35, y: 35 },
+            { x: BOARD_SIZE - 35, y: 35 },
+            { x: 35, y: BOARD_SIZE - 35 },
+            { x: BOARD_SIZE - 35, y: BOARD_SIZE - 35 }
+        ];
 
-                <div class="field-group">
-                    <label>📊 Work Count</label>
-                    <select id="workCount" required></select>
-                </div>
+        // গুটি সাজানোর ফাংশন (৯ সাদা, ৯ কালো, ১ লাল)
+        function initGutis() {
+            gutis = [];
+            const centerX = BOARD_SIZE / 2;
+            const centerY = BOARD_SIZE / 2;
 
-                <div class="field-group">
-                    <label>📍 From Area</label>
-                    <select id="fromArea" required><option value="">Select From</option></select>
-                </div>
+            // ১টি রেড (রানী) ঠিক মাঝখানে
+            gutis.push({ x: centerX, y: centerY, vx: 0, vy: 0, color: '#e74c3c', stroke: '#900C3F', type: 'red' });
 
-                <div class="field-group">
-                    <label>🎯 To Area</label>
-                    <select id="toArea" required><option value="">Select To</option></select>
-                </div>
+            // প্রথম রিং (Inner Circle - 6 gutis: alternate White & Black)
+            const r1 = GUTI_RADIUS * 2.1;
+            for (let i = 0; i < 6; i++) {
+                let angle = (i * 60) * Math.PI / 180;
+                let isWhite = i % 2 === 0;
+                gutis.push({
+                    x: centerX + r1 * Math.cos(angle),
+                    y: centerY + r1 * Math.sin(angle),
+                    vx: 0, vy: 0,
+                    color: isWhite ? '#ffffff' : '#2c3e50',
+                    stroke: isWhite ? '#ccc' : '#000',
+                    type: isWhite ? 'white' : 'black'
+                });
+            }
 
-                <div class="field-group">
-                    <label>🚌 Transport Fare (Tk)</label>
-                    <select id="fareSelect" required></select>
-                </div>
-
-                <!-- Advance Amount Input -->
-                <div class="field-group">
-                    <label>💵 Advance Amount (টাকা)</label>
-                    <input type="number" id="advanceInput" placeholder="যেমন: 500" value="0">
-                </div>
-
-                <!-- Advance Payment Type Dropdown -->
-                <div class="field-group">
-                    <label>💳 Advance Payment Type</label>
-                    <select id="advanceType">
-                        <option value="N/A">কোনো এডভান্স নেই</option>
-                        <option value="bKash">bKash (বিকাশ)</option>
-                        <option value="Cash">Cash (ক্যাশ)</option>
-                        <option value="Nagad">Nagad (নগদ)</option>
-                        <option value="Bank">Bank Transfer</option>
-                    </select>
-                </div>
-
-                <div class="field-group">
-                    <label>👨‍💼 Supervisor</label>
-                    <select id="supervisor" required>
-                        <option value="">Select Supervisor</option>
-                        <option value="Tuhin Pradhan">Tuhin Pradhan</option>
-                        <option value="Nazmul Huque">Nazmul Huque</option>
-                        <option value="Imtiaz Islam">Imtiaz Islam</option>
-                        <option value="Nasir Uddin">Nasir Uddin</option>
-                    </select>
-                </div>
-
-                <div class="field-group">
-                    <label>💰 Total Income (টাকা)</label>
-                    <input type="number" id="incomeInput" placeholder="যেমন: 1000" required>
-                </div>
-
-                <div class="actions">
-                    <button type="submit" class="btn btn-primary"><i data-lucide="save"></i> Save Record</button>
-                    <button type="button" class="btn btn-success" onclick="exportToExcel()"><i data-lucide="download"></i> Export Excel</button>
-                    <button type="button" class="btn btn-danger" onclick="clearAllData()"><i data-lucide="trash-2"></i> Clear All</button>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    <div class="table-card">
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Companies</th>
-                    <th>Project</th>
-                    <th>Count</th>
-                    <th>Route</th>
-                    <th>Fare</th>
-                    <th>Advance</th>
-                    <th>Method</th>
-                    <th>Supervisor</th>
-                    <th>Income</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
-    </div>
-</div>
-
-<script>
-    lucide.createIcons();
-    document.getElementById('liveDate').innerText = new Date().toLocaleDateString('en-GB');
-
-    const dhakaAreas = ["Adabor", "Agargaon", "Ashulia", "BPATC", "Badda", "Baipal", "Banani", "Barangail", "Dhamrai", "Dhanmandi", "EPZ (DEPZ)", "Farmgate", "Hemayetpur", "Jahangirnagar University", "Jamgora", "Jirabo", "Manikganj Sadar", "Mirpur-10", "Mirpur-12", "Mohakhali", "Mohammadpur", "Nabinagar", "Others", "Savar Bazar", "Savar Bus Stand", "Singair", "Uttara"];
-
-    const fromSelect = document.getElementById('fromArea');
-    const toSelect = document.getElementById('toArea');
-    dhakaAreas.forEach(a => {
-        fromSelect.add(new Option(a, a));
-        toSelect.add(new Option(a, a));
-    });
-
-    const workSelect = document.getElementById('workCount');
-    for (let i = 1; i <= 50; i++) workSelect.add(new Option(i + ' টি কাজ', i));
-
-    const fareSelect = document.getElementById('fareSelect');
-    for (let v = 10; v <= 300; v += 10) fareSelect.add(new Option(v + ' Tk', v));
-
-    let selectedCompanies = [], selectedApps = [];
-
-    document.querySelectorAll('#companyChips .chip').forEach(chip => {
-        chip.addEventListener('click', () => {
-            chip.classList.toggle('active');
-            const v = chip.dataset.val;
-            selectedCompanies = chip.classList.contains('active') ? [...selectedCompanies, v] : selectedCompanies.filter(c => c !== v);
-        });
-    });
-
-    document.querySelectorAll('#appChips .chip').forEach(chip => {
-        chip.addEventListener('click', () => {
-            chip.classList.toggle('active');
-            const v = chip.dataset.val;
-            selectedApps = chip.classList.contains('active') ? [...selectedApps, v] : selectedApps.filter(a => a !== v);
-        });
-    });
-
-    let records = JSON.parse(localStorage.getItem('fw_adv_data')) || [];
-
-    document.getElementById('proForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        if(!selectedCompanies.length || !selectedApps.length) {
-            alert('At least one Company and App required!');
-            return;
+            // দ্বিতীয় রিং (Outer Circle - 12 gutis)
+            const r2 = GUTI_RADIUS * 4.1;
+            for (let i = 0; i < 12; i++) {
+                let angle = (i * 30 + 15) * Math.PI / 180;
+                let isWhite = i % 2 !== 0; // Balance to make total 9 White & 9 Black
+                gutis.push({
+                    x: centerX + r2 * Math.cos(angle),
+                    y: centerY + r2 * Math.sin(angle),
+                    vx: 0, vy: 0,
+                    color: isWhite ? '#ffffff' : '#2c3e50',
+                    stroke: isWhite ? '#ccc' : '#000',
+                    type: isWhite ? 'white' : 'black'
+                });
+            }
         }
 
-        const newRec = {
-            id: Date.now(),
-            date: new Date().toLocaleDateString('en-GB'),
-            companies: [...selectedCompanies],
-            apps: [...selectedApps],
-            project: document.getElementById('projectName').value,
-            workCount: Number(document.getElementById('workCount').value),
-            route: `${fromSelect.value} ➔ ${toSelect.value}`,
-            vara: Number(fareSelect.value),
-            advance: Number(document.getElementById('advanceInput').value),
-            advanceType: document.getElementById('advanceType').value,
-            supervisor: document.getElementById('supervisor').value,
-            income: Number(document.getElementById('incomeInput').value)
-        };
+        // বোর্ড ও এরিয়া ড্র করা
+        function drawBoard() {
+            // ব্যাকগ্রাউন্ড
+            ctx.fillStyle = '#f3e5ab';
+            ctx.fillRect(0, 0, BOARD_SIZE, BOARD_SIZE);
 
-        records.push(newRec);
-        localStorage.setItem('fw_adv_data', JSON.stringify(records));
-        this.reset();
-        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-        selectedCompanies = []; selectedApps = [];
-        renderUI();
-    });
+            // ৪টি পকেট (Pocket)
+            ctx.fillStyle = '#1a1a1a';
+            pockets.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, POCKET_RADIUS, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#5c3a21';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            });
 
-    function deleteRecord(id) {
-        if(confirm('Delete record?')) {
-            records = records.filter(r => r.id !== id);
-            localStorage.setItem('fw_adv_data', JSON.stringify(records));
-            renderUI();
+            // সেন্টার সার্কেল (Center Circle)
+            ctx.beginPath();
+            ctx.arc(BOARD_SIZE / 2, BOARD_SIZE / 2, 45, 0, Math.PI * 2);
+            ctx.strokeStyle = '#c0392b';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(BOARD_SIZE / 2, BOARD_SIZE / 2, 15, 0, Math.PI * 2);
+            ctx.fillStyle = '#e74c3c';
+            ctx.fill();
+
+            // বেস লাইন (Base Lines for Striker)
+            drawBaseLine(100, 410, 400, 410); // Bottom
+            drawBaseLine(100, 90, 400, 90);   // Top
+            drawBaseLine(90, 100, 90, 400);   // Left
+            drawBaseLine(410, 100, 410, 400); // Right
         }
-    }
 
-    function renderUI() {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
+        function drawBaseLine(x1, y1, x2, y2) {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = '#c0392b';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
 
-        let totalAdvance = 0, totalVara = 0, totalIncome = 0;
+        // গুটি ও স্ট্রাইকার আঁকা
+        function drawCircles() {
+            // গুটি আঁকা
+            gutis.forEach(g => {
+                ctx.beginPath();
+                ctx.arc(g.x, g.y, GUTI_RADIUS, 0, Math.PI * 2);
+                ctx.fillStyle = g.color;
+                ctx.fill();
+                ctx.strokeStyle = g.stroke;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
 
-        records.forEach(r => {
-            totalAdvance += r.advance;
-            totalVara += r.vara;
-            totalIncome += r.income;
+            // স্ট্রাইকার আঁকা
+            ctx.beginPath();
+            ctx.arc(striker.x, striker.y, STRIKER_RADIUS, 0, Math.PI * 2);
+            ctx.fillStyle = '#f1c40f'; // গোল্ডেন/হলুদ স্ট্রাইকার
+            ctx.fill();
+            ctx.strokeStyle = '#d35400';
+            ctx.lineWidth = 3;
+            ctx.stroke();
 
-            const comps = r.companies.map(c => `<span class="tag">${c}</span>`).join('');
+            // শট মারার নির্দেশক লাইন
+            if (striker.isDragging) {
+                ctx.beginPath();
+                ctx.moveTo(striker.x, striker.y);
+                ctx.lineTo(striker.x + (dragStart.x - striker.x), striker.y + (dragStart.y - striker.y));
+                ctx.strokeStyle = 'rgba(231, 76, 60, 0.8)';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([5, 5]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
 
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${r.date}</td>
-                <td>${comps}</td>
-                <td><strong>${r.project}</strong></td>
-                <td>${r.workCount}</td>
-                <td>${r.route}</td>
-                <td>${r.vara} ৳</td>
-                <td style="color:var(--amber); font-weight:bold;">${r.advance} ৳</td>
-                <td><span class="tag">${r.advanceType}</span></td>
-                <td>${r.supervisor}</td>
-                <td style="color:var(--success); font-weight:bold;">${r.income} ৳</td>
-                <td><button onclick="deleteRecord(${r.id})" style="color:var(--danger); background:none; border:none; cursor:pointer;">Delete</button></td>
-            `;
-            tbody.appendChild(tr);
+        // ফিজিক্স এবং পজিশন আপডেট
+        function updatePhysics() {
+            const allItems = [...gutis, striker];
+
+            allItems.forEach(item => {
+                item.x += item.vx;
+                item.y += item.vy;
+
+                // ফ্রিকশন/ঘর্ষণ (ধীরে ধীরে থামা)
+                item.vx *= 0.98;
+                item.vy *= 0.98;
+
+                if (Math.abs(item.vx) < 0.05) item.vx = 0;
+                if (Math.abs(item.vy) < 0.05) item.vy = 0;
+
+                // বোর্ডের দেয়াল/বর্ডারে ধাক্কা
+                if (item.x - GUTI_RADIUS < 15 || item.x + GUTI_RADIUS > BOARD_SIZE - 15) item.vx *= -1;
+                if (item.y - GUTI_RADIUS < 15 || item.y + GUTI_RADIUS > BOARD_SIZE - 15) item.vy *= -1;
+
+                // পকেটে গুটি পড়া চেক করা
+                pockets.forEach(p => {
+                    let dist = Math.hypot(p.x - item.x, p.y - item.y);
+                    if (dist < POCKET_RADIUS) {
+                        if (item === striker) {
+                            // স্ট্রাইকার পকেটে পড়লে রিকভারি
+                            striker.x = 250;
+                            striker.y = 410;
+                            striker.vx = 0;
+                            striker.vy = 0;
+                        } else {
+                            // গুটি পকেটে পড়লে বোর্ড থেকে গায়েব
+                            gutis = gutis.filter(g => g !== item);
+                        }
+                    }
+                });
+            });
+
+            // গুটি ও স্ট্রাইকারের একে অপরের সাথে ধাক্কা (Collision)
+            for (let i = 0; i < allItems.length; i++) {
+                for (let j = i + 1; j < allItems.length; j++) {
+                    let a = allItems[i];
+                    let b = allItems[j];
+                    let dx = b.x - a.x;
+                    let dy = b.y - a.y;
+                    let dist = Math.hypot(dx, dy);
+                    let minDist = (a === striker || b === striker) ? GUTI_RADIUS + STRIKER_RADIUS : GUTI_RADIUS * 2;
+
+                    if (dist < minDist) {
+                        let angle = Math.atan2(dy, dx);
+                        let targetX = a.x + Math.cos(angle) * minDist;
+                        let targetY = a.y + Math.sin(angle) * minDist;
+                        let ax = (targetX - b.x) * 0.1;
+                        let ay = (targetY - b.y) * 0.1;
+
+                        a.vx -= ax;
+                        a.vy -= ay;
+                        b.vx += ax;
+                        b.vy += ay;
+                    }
+                }
+            }
+        }
+
+        // মাউস কন্ট্রোল (Drag & Shoot)
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            let dist = Math.hypot(mouseX - striker.x, mouseY - striker.y);
+            if (dist < STRIKER_RADIUS + 10) {
+                striker.isDragging = true;
+                dragStart = { x: mouseX, y: mouseY };
+            }
         });
 
-        document.getElementById('statEntries').innerText = records.length;
-        document.getElementById('statAdvance').innerText = totalAdvance + ' ৳';
-        document.getElementById('statVara').innerText = totalVara + ' ৳';
-        document.getElementById('statIncome').innerText = totalIncome + ' ৳';
-    }
+        canvas.addEventListener('mousemove', (e) => {
+            if (striker.isDragging) {
+                const rect = canvas.getBoundingClientRect();
+                dragStart.x = e.clientX - rect.left;
+                dragStart.y = e.clientY - rect.top;
+            }
+        });
 
-    function exportToExcel() {
-        if(!records.length) return alert('No data to export');
-        const wb = XLSX.utils.table_to_book(document.querySelector("table"));
-        XLSX.writeFile(wb, `Fieldwork_Advance_Report.xlsx`);
-    }
+        canvas.addEventListener('mouseup', () => {
+            if (striker.isDragging) {
+                striker.vx = (striker.x - dragStart.x) * 0.15;
+                striker.vy = (striker.y - dragStart.y) * 0.15;
+                striker.isDragging = false;
+            }
+        });
 
-    function clearAllData() {
-        if(confirm('Clear all entries?')) {
-            records = [];
-            localStorage.removeItem('fw_adv_data');
-            renderUI();
+        // গেম লুপ
+        function gameLoop() {
+            ctx.clearRect(0, 0, BOARD_SIZE, BOARD_SIZE);
+            drawBoard();
+            updatePhysics();
+            drawCircles();
+            requestAnimationFrame(gameLoop);
         }
-    }
 
-    renderUI();
-</script>
+        initGutis();
+        gameLoop();
+    </script>
 </body>
 </html>
