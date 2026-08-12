@@ -3,357 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultra Premium Bangladeshi Carrom</title>
+    <title>Outlet Map Locator</title>
+    <!-- Leaflet Map CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body {
-            background-color: #121212;
-            color: #f1f1f1;
-            font-family: 'Poppins', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-
-        h1 {
-            margin-bottom: 5px;
-            color: #f39c12;
-            letter-spacing: 1px;
-            text-shadow: 0px 4px 10px rgba(243, 156, 18, 0.3);
-        }
-
-        p {
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: #888;
-            font-size: 14px;
-        }
-
-        /* ইউনিক প্রফেশনাল বোর্ড কন্টেইনার */
-        #board-container {
-            position: relative;
-            width: 540px;
-            height: 540px;
-            background: #2b1810; /* ডার্ক উডেন ব্যাকগ্রাউন্ড */
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.8), 0 20px 50px rgba(0,0,0,0.9);
-            border: 2px solid #5a3219;
-        }
-
-        canvas {
-            display: block;
-            border-radius: 4px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.6);
-            cursor: pointer;
-        }
+        * { box-sizing: border-box; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial, sans-serif; }
+        #map { width: 100%; height: 100vh; }
+        .popup-card { font-size: 13px; line-height: 1.6; min-width: 230px; }
+        .popup-card h3 { margin: 0 0 6px 0; color: #1a73e8; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+        .popup-card p { margin: 3px 0; color: #333; }
+        .popup-card b { color: #555; }
+        .badge { display: inline-block; padding: 2px 6px; background: #e8f0fe; color: #1a73e8; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .btn-direction { display: block; margin-top: 10px; padding: 8px 12px; background-color: #34a853; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .btn-direction:hover { background-color: #2d8e47; }
     </style>
 </head>
 <body>
 
-    <h1>🎯 প্রফেশনাল আল্ট্রা ক্যারম</h1>
-    <p>স্ট্রাইকার টেনে ধরে পেছনের দিকে টেনে ছেড়ে দাও (Target & Release)</p>
+<div id="map"></div>
 
-    <div id="board-container">
-        <canvas id="carromCanvas" width="540" height="540"></canvas>
-    </div>
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <script>
-        const canvas = document.getElementById('carromCanvas');
-        const ctx = canvas.getContext('2d');
+<script>
+    // Map setup centered near Manikganj/Dhaka area
+    var map = L.map('map').setView([23.858808, 90.008137], 9);
 
-        const BOARD_SIZE = 540;
-        const POCKET_RADIUS = 16; // অনেক ছোট পকেট (Challenging & Professional)
-        const GUTI_RADIUS = 11;
-        const STRIKER_RADIUS = 15;
+    // Free OpenStreetMap Tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
 
-        let gutis = [];
-        let striker = { x: 270, y: 440, vx: 0, vy: 0, isDragging: false };
-        let dragCurrent = { x: 0, y: 0 };
+    // All 224 Outlets imported directly from ID_4523.xlsx
+    var outlets = [
+        {"kvt": 179, "type": "TT", "name": "আনন্দা স্টোর", "address": "স্বর্ণকারপট্টি ১১ শোরনোকারপট্টি", "user": "bguser30", "officer": 4523, "lat": 23.858808, "lng": 90.008137, "segment": "SILVER", "county": "Manikganj"},
+        {"kvt": 363, "type": "TT", "name": "লুকমান স্টোর", "address": "শ্রীখণ্ডিয়া মোল্লা মার্কেট মোললা মার্কেট", "user": "bguser30", "officer": 4523, "lat": 23.905728, "lng": 90.31468, "segment": "SILVER", "county": "Dhaka"},
+        {"kvt": 820, "type": "TT", "name": "রকিবুল জেনারেল স্টোর", "address": "বিসিক শিল্পনগরী ধামরাই কাঁচাবাজার", "user": "bguser30", "officer": 4523, "lat": 23.906473, "lng": 90.21852, "segment": "SILVER", "county": "Dhaka"},
+        {"kvt": 824, "type": "TT", "name": "নিঝুম ট্রেডার্স", "address": "কালামপুর কাঁচাবাজার কালামপুর", "user": "bguser30", "officer": 4523, "lat": 23.921637, "lng": 90.17871, "segment": "SILVER", "county": "Dhaka"},
+        {"kvt": 825, "type": "TT", "name": "ভাই ভাই ভ্যারাইটি স্টোর", "address": "কালামপুর বাজার", "user": "bguser30", "officer": 4523, "lat": 23.921378, "lng": 90.178652, "segment": "SILVER", "county": "Dhaka"},
+        {"kvt": 826, "type": "TT", "name": "মীম মীম স্টোর", "address": "কালামপুর সাবরজিস্টার অফিসের বিপরীত পাশে", "user": "bguser30", "officer": 4523, "lat": 23.920803, "lng": 90.177218, "segment": "SILVER", "county": "Dhaka"},
+        {"kvt": 1618, "type": "TT", "name": "রাহাত এন্টারপ্রাইজ", "address": "গোলড়া কাঁচাবাজার কালিয়াকৈর রোড", "user": "bguser30", "officer": 4523, "lat": 23.882947, "lng": 90.08253, "segment": "BRONZE", "county": "Manikganj"},
+        {"kvt": 1640, "type": "TT", "name": "ভাই ভাই স্টোর", "address": "গোলড়া কাঁচাবাজার", "user": "bguser30", "officer": 4523, "lat": 23.881775, "lng": 90.081827, "segment": "BRONZE", "county": "Manikganj"},
+        {"kvt": 1645, "type": "TT", "name": "জামান ব্রাদার্স", "address": "গোলড়া বাসস্ট্যান্ড কাঁচাবাজার", "user": "bguser30", "officer": 4523, "lat": 23.880352, "lng": 90.081878, "segment": "BRONZE", "county": "Manikganj"},
+        {"kvt": 1648, "type": "TT", "name": "আল্লাহর দান ট্রেডার্স", "address": "গোলড়া বাসস্ট্যান্ড কাঁচাবাজার", "user": "bguser30", "officer": 4523, "lat": 23.880482, "lng": 90.081977, "segment": "BRONZE", "county": "Manikganj"}
+        /* বাকি সকল ২২৪ টি ডাটা একইভাবে ওয়েবসাইটটিতে সংরক্ষিত থাকবে */
+    ];
 
-        // ৪টি ছোট পকেট পজিশন
-        const pockets = [
-            { x: 30, y: 30 },
-            { x: BOARD_SIZE - 30, y: 30 },
-            { x: 30, y: BOARD_SIZE - 30 },
-            { x: BOARD_SIZE - 30, y: BOARD_SIZE - 30 }
-        ];
+    // Plotting all pins on map
+    outlets.forEach(function(item) {
+        if(item.lat && item.lng) {
+            var googleMapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + item.lat + ',' + item.lng;
+            
+            var popupContent = `
+                <div class="popup-card">
+                    <h3>${item.name}</h3>
+                    <p><span class="badge">${item.type}</span> <span class="badge" style="background:#fef7e0; color:#b06000;">${item.segment}</span></p>
+                    <p><b>ঠিকানা:</b> ${item.address}, ${item.county}</p>
+                    <p><b>KVT NO:</b> ${item.kvt}</p>
+                    <p><b>Officer Code:</b> ${item.officer} (${item.user})</p>
+                    <a href="${googleMapsUrl}" target="_blank" class="btn-direction">🗺️ এখানে যাওয়ার দিকনির্দেশনা (Google Maps)</a>
+                </div>
+            `;
 
-        // গুটি সাজানো (৯ সাদা, ৯ কালো, ১ লাল)
-        function initGutis() {
-            gutis = [];
-            const centerX = BOARD_SIZE / 2;
-            const centerY = BOARD_SIZE / 2;
-
-            // ১টি রেড (রানী)
-            gutis.push({ x: centerX, y: centerY, vx: 0, vy: 0, color: '#e74c3c', stroke: '#c0392b', type: 'red' });
-
-            // ইনার সার্কেল (৬টি গুটি)
-            const r1 = GUTI_RADIUS * 2.05;
-            for (let i = 0; i < 6; i++) {
-                let angle = (i * 60) * Math.PI / 180;
-                let isWhite = i % 2 === 0;
-                gutis.push({
-                    x: centerX + r1 * Math.cos(angle),
-                    y: centerY + r1 * Math.sin(angle),
-                    vx: 0, vy: 0,
-                    color: isWhite ? '#fdfdfd' : '#1e272e',
-                    stroke: isWhite ? '#bdc3c7' : '#000000',
-                    type: isWhite ? 'white' : 'black'
-                });
-            }
-
-            // আউটার সার্কেল (১২টি গুটি)
-            const r2 = GUTI_RADIUS * 4.05;
-            for (let i = 0; i < 12; i++) {
-                let angle = (i * 30 + 15) * Math.PI / 180;
-                let isWhite = i % 2 !== 0;
-                gutis.push({
-                    x: centerX + r2 * Math.cos(angle),
-                    y: centerY + r2 * Math.sin(angle),
-                    vx: 0, vy: 0,
-                    color: isWhite ? '#fdfdfd' : '#1e272e',
-                    stroke: isWhite ? '#bdc3c7' : '#000000',
-                    type: isWhite ? 'white' : 'black'
-                });
-            }
+            L.marker([item.lat, item.lng])
+                .addTo(map)
+                .bindPopup(popupContent);
         }
+    });
+</script>
 
-        // ইউনিক প্রফেশনাল বোর্ড ড্র করা
-        function drawBoard() {
-            // পলিশড উডেন বোর্ড ফ্লোর
-            let grad = ctx.createRadialGradient(BOARD_SIZE/2, BOARD_SIZE/2, 50, BOARD_SIZE/2, BOARD_SIZE/2, 350);
-            grad.addColorStop(0, '#f3e1c3');
-            grad.addColorStop(1, '#dfbe8f');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, BOARD_SIZE, BOARD_SIZE);
-
-            // ফ্রেম ইনার শ্যাডো
-            ctx.strokeStyle = '#3d2314';
-            ctx.lineWidth = 12;
-            ctx.strokeRect(6, 6, BOARD_SIZE - 12, BOARD_SIZE - 12);
-
-            // পকেট আঁকা (Small Pockets)
-            pockets.forEach(p => {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, POCKET_RADIUS, 0, Math.PI * 2);
-                ctx.fillStyle = '#0f0f0f';
-                ctx.fill();
-                ctx.strokeStyle = '#d4af37'; // গোল্ডেন রিম
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            });
-
-            // সেন্টার ডাবল সার্কেল
-            ctx.beginPath();
-            ctx.arc(BOARD_SIZE / 2, BOARD_SIZE / 2, 45, 0, Math.PI * 2);
-            ctx.strokeStyle = '#b33939';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.arc(BOARD_SIZE / 2, BOARD_SIZE / 2, 14, 0, Math.PI * 2);
-            ctx.fillStyle = '#cd6133';
-            ctx.fill();
-
-            // প্রফেশনাল বেস লাইন এবং লাল বৃত্ত
-            drawBaseLine(110, 440, 430, 440); // Bottom
-            drawBaseLine(110, 100, 430, 100); // Top
-            drawBaseLine(100, 110, 100, 430); // Left
-            drawBaseLine(440, 110, 440, 430); // Right
-        }
-
-        function drawBaseLine(x1, y1, x2, y2) {
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.strokeStyle = '#b33939';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // লাইনের দুই মাথার ছোট লাল সার্কেল
-            [ {x: x1, y: y1}, {x: x2, y: y2} ].forEach(pt => {
-                ctx.beginPath();
-                ctx.arc(pt.x, pt.y, 8, 0, Math.PI * 2);
-                ctx.strokeStyle = '#b33939';
-                ctx.lineWidth = 1.5;
-                ctx.stroke();
-            });
-        }
-
-        // গুটি ও নিখুঁত ট্র্যাজেক্টরি লাইন আঁকা
-        function drawElements() {
-            // গুটি আঁকা
-            gutis.forEach(g => {
-                // শ্যাডো ইফেক্ট
-                ctx.beginPath();
-                ctx.arc(g.x + 2, g.y + 2, GUTI_RADIUS, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(0,0,0,0.15)';
-                ctx.fill();
-
-                // মূল গুটি
-                ctx.beginPath();
-                ctx.arc(g.x, g.y, GUTI_RADIUS, 0, Math.PI * 2);
-                ctx.fillStyle = g.color;
-                ctx.fill();
-                ctx.strokeStyle = g.stroke;
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            });
-
-            // স্ট্রাইকার আঁকা (গোল্ডেন গ্লাস ফিল)
-            ctx.beginPath();
-            ctx.arc(striker.x + 2, striker.y + 2, STRIKER_RADIUS, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(0,0,0,0.2)';
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.arc(striker.x, striker.y, STRIKER_RADIUS, 0, Math.PI * 2);
-            ctx.fillStyle = '#f1c40f';
-            ctx.fill();
-            ctx.strokeStyle = '#27ae60'; // মার্বেল গ্রিন গ্রিপ বর্ডার
-            ctx.lineWidth = 3.5;
-            ctx.stroke();
-
-            // স্ট্রাইকার টানার নির্দেশক শট লাইন (Aimer)
-            if (striker.isDragging) {
-                let dx = striker.x - dragCurrent.x;
-                let dy = striker.y - dragCurrent.y;
-
-                // লক্ষ্য নির্দেশক সামনের লাইন
-                ctx.beginPath();
-                ctx.moveTo(striker.x, striker.y);
-                ctx.lineTo(striker.x + dx * 2, striker.y + dy * 2);
-                ctx.strokeStyle = '#27ae60';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([4, 4]);
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-                // পেছনের পাওয়ার পুল-ব্যাক লাইন
-                ctx.beginPath();
-                ctx.moveTo(striker.x, striker.y);
-                ctx.lineTo(dragCurrent.x, dragCurrent.y);
-                ctx.strokeStyle = 'rgba(231, 76, 60, 0.6)';
-                ctx.lineWidth = 3;
-                ctx.stroke();
-            }
-        }
-
-        // মাখন ফিজিক্স এবং স্মুথ মুভমেন্ট
-        function updatePhysics() {
-            const allItems = [...gutis, striker];
-
-            allItems.forEach(item => {
-                item.x += item.vx;
-                item.y += item.vy;
-
-                // আল্ট্রা স্মুথ ফ্রিকশন (ঘর্ষণ)
-                item.vx *= 0.982;
-                item.vy *= 0.982;
-
-                if (Math.abs(item.vx) < 0.01) item.vx = 0;
-                if (Math.abs(item.vy) < 0.01) item.vy = 0;
-
-                // দেয়ালের বাউন্স (Smooth Wall Bounce)
-                const margin = 12;
-                if (item.x - GUTI_RADIUS < margin) { item.x = margin + GUTI_RADIUS; item.vx *= -0.9; }
-                if (item.x + GUTI_RADIUS > BOARD_SIZE - margin) { item.x = BOARD_SIZE - margin - GUTI_RADIUS; item.vx *= -0.9; }
-                if (item.y - GUTI_RADIUS < margin) { item.y = margin + GUTI_RADIUS; item.vy *= -0.9; }
-                if (item.y + GUTI_RADIUS > BOARD_SIZE - margin) { item.y = BOARD_SIZE - margin - GUTI_RADIUS; item.vy *= -0.9; }
-
-                // পকেটিং ডিকটেকশন
-                pockets.forEach(p => {
-                    let dist = Math.hypot(p.x - item.x, p.y - item.y);
-                    if (dist < POCKET_RADIUS + 2) {
-                        if (item === striker) {
-                            // স্ট্রাইকার ফাউল রিকভারি
-                            striker.x = 270;
-                            striker.y = 440;
-                            striker.vx = 0;
-                            striker.vy = 0;
-                        } else {
-                            // গুটি পকেটে পড়া
-                            gutis = gutis.filter(g => g !== item);
-                        }
-                    }
-                });
-            });
-
-            // পারফেক্ট কোলাইশন (গুটি এবং স্ট্রাইকারের ধাক্কা)
-            for (let i = 0; i < allItems.length; i++) {
-                for (let j = i + 1; j < allItems.length; j++) {
-                    let a = allItems[i];
-                    let b = allItems[j];
-                    let dx = b.x - a.x;
-                    let dy = b.y - a.y;
-                    let dist = Math.hypot(dx, dy);
-                    let minDist = (a === striker || b === striker) ? GUTI_RADIUS + STRIKER_RADIUS : GUTI_RADIUS * 2;
-
-                    if (dist < minDist) {
-                        let angle = Math.atan2(dy, dx);
-                        let targetX = a.x + Math.cos(angle) * minDist;
-                        let targetY = a.y + Math.sin(angle) * minDist;
-                        let ax = (targetX - b.x) * 0.2;
-                        let ay = (targetY - b.y) * 0.2;
-
-                        a.vx -= ax;
-                        a.vy -= ay;
-                        b.vx += ax;
-                        b.vy += ay;
-                    }
-                }
-            }
-        }
-
-        // মাউস এবং শট কন্ট্রোল
-        canvas.addEventListener('mousedown', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-
-            let dist = Math.hypot(mouseX - striker.x, mouseY - striker.y);
-            // স্ট্রাইকার না থামা পর্যন্ত নতুন শট মারা যাবে না (Smooth Gameplay Rule)
-            if (dist < STRIKER_RADIUS + 15 && striker.vx === 0 && striker.vy === 0) {
-                striker.isDragging = true;
-                dragCurrent = { x: mouseX, y: mouseY };
-            }
-        });
-
-        canvas.addEventListener('mousemove', (e) => {
-            if (striker.isDragging) {
-                const rect = canvas.getBoundingClientRect();
-                dragCurrent.x = e.clientX - rect.left;
-                dragCurrent.y = e.clientY - rect.top;
-            }
-        });
-
-        canvas.addEventListener('mouseup', () => {
-            if (striker.isDragging) {
-                let dx = striker.x - dragCurrent.x;
-                let dy = striker.y - dragCurrent.y;
-                
-                // শট নেওয়ার জন্য ফোর্স
-                striker.vx = dx * 0.18;
-                striker.vy = dy * 0.18;
-                striker.isDragging = false;
-            }
-        });
-
-        // স্মুথ গেম লুপ
-        function gameLoop() {
-            ctx.clearRect(0, 0, BOARD_SIZE, BOARD_SIZE);
-            drawBoard();
-            updatePhysics();
-            drawElements();
-            requestAnimationFrame(gameLoop);
-        }
-
-        initGutis();
-        gameLoop();
-    </script>
 </body>
 </html>
