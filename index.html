@@ -3,75 +3,337 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Outlet Map Locator</title>
-    <!-- Leaflet Map CSS -->
+    <title>Outlet Map & Location Finder</title>
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
-        * { box-sizing: border-box; }
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial, sans-serif; }
-        #map { width: 100%; height: 100vh; }
-        .popup-card { font-size: 13px; line-height: 1.6; min-width: 230px; }
-        .popup-card h3 { margin: 0 0 6px 0; color: #1a73e8; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
-        .popup-card p { margin: 3px 0; color: #333; }
-        .popup-card b { color: #555; }
-        .badge { display: inline-block; padding: 2px 6px; background: #e8f0fe; color: #1a73e8; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .btn-direction { display: block; margin-top: 10px; padding: 8px 12px; background-color: #34a853; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .btn-direction:hover { background-color: #2d8e47; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f4f6f9;
+        }
+        #sidebar {
+            width: 380px;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #e0e0e0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            z-index: 1000;
+        }
+        .header {
+            padding: 18px 20px;
+            background: #1a73e8;
+            color: white;
+        }
+        .header h2 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        .header p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        .controls {
+            padding: 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .search-box input, .filter-box select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+        }
+        .btn-location {
+            padding: 10px;
+            background: #34a853;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        .btn-location:hover {
+            background: #2d8e47;
+        }
+        #outlet-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .outlet-card {
+            background: white;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .outlet-card:hover {
+            border-color: #1a73e8;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+        .outlet-title {
+            font-weight: bold;
+            color: #202124;
+            font-size: 15px;
+        }
+        .outlet-meta {
+            font-size: 12px;
+            color: #5f6368;
+            margin-top: 4px;
+        }
+        .distance-badge {
+            display: inline-block;
+            background: #e8f0fe;
+            color: #1a73e8;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+        .popup-content {
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .popup-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1a73e8;
+            margin-bottom: 6px;
+        }
+        .popup-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px 12px;
+            background: #1a73e8;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column-reverse;
+            }
+            #sidebar {
+                width: 100%;
+                height: 45vh;
+            }
+            #map {
+                height: 55vh;
+            }
+        }
     </style>
 </head>
 <body>
 
-<div id="map"></div>
+    <div id="sidebar">
+        <div class="header">
+            <h2><i class="fa-solid fa-store"></i> Outlet Locator</h2>
+            <p>মোট ২২৪ টি আউটলেট সংযুক্ত রয়েছে</p>
+        </div>
 
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <div class="controls">
+            <button class="btn-location" onclick="getUserLocation()">
+                <i class="fa-solid fa-location-crosshairs"></i> আমার লোকেশন খুঁজুন
+            </button>
+            <input type="text" id="searchInput" class="search-box" placeholder="দোকানের নাম বা ঠিকানা দিয়ে খুঁজুন..." oninput="filterData()">
+            <div class="filter-box">
+                <select id="countyFilter" onchange="filterData()">
+                    <option value="">সকল কাউন্টি (All Counties)</option>
+                </select>
+            </div>
+        </div>
 
-<script>
-    // Map setup centered near Manikganj/Dhaka area
-    var map = L.map('map').setView([23.858808, 90.008137], 9);
+        <div id="outlet-list"></div>
+    </div>
 
-    // Free OpenStreetMap Tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    <div id="map"></div>
 
-    // All 224 Outlets imported directly from ID_4523.xlsx
-    var outlets = [
-        {"kvt": 179, "type": "TT", "name": "আনন্দা স্টোর", "address": "স্বর্ণকারপট্টি ১১ শোরনোকারপট্টি", "user": "bguser30", "officer": 4523, "lat": 23.858808, "lng": 90.008137, "segment": "SILVER", "county": "Manikganj"},
-        {"kvt": 363, "type": "TT", "name": "লুকমান স্টোর", "address": "শ্রীখণ্ডিয়া মোল্লা মার্কেট মোললা মার্কেট", "user": "bguser30", "officer": 4523, "lat": 23.905728, "lng": 90.31468, "segment": "SILVER", "county": "Dhaka"},
-        {"kvt": 820, "type": "TT", "name": "রকিবুল জেনারেল স্টোর", "address": "বিসিক শিল্পনগরী ধামরাই কাঁচাবাজার", "user": "bguser30", "officer": 4523, "lat": 23.906473, "lng": 90.21852, "segment": "SILVER", "county": "Dhaka"},
-        {"kvt": 824, "type": "TT", "name": "নিঝুম ট্রেডার্স", "address": "কালামপুর কাঁচাবাজার কালামপুর", "user": "bguser30", "officer": 4523, "lat": 23.921637, "lng": 90.17871, "segment": "SILVER", "county": "Dhaka"},
-        {"kvt": 825, "type": "TT", "name": "ভাই ভাই ভ্যারাইটি স্টোর", "address": "কালামপুর বাজার", "user": "bguser30", "officer": 4523, "lat": 23.921378, "lng": 90.178652, "segment": "SILVER", "county": "Dhaka"},
-        {"kvt": 826, "type": "TT", "name": "মীম মীম স্টোর", "address": "কালামপুর সাবরজিস্টার অফিসের বিপরীত পাশে", "user": "bguser30", "officer": 4523, "lat": 23.920803, "lng": 90.177218, "segment": "SILVER", "county": "Dhaka"},
-        {"kvt": 1618, "type": "TT", "name": "রাহাত এন্টারপ্রাইজ", "address": "গোলড়া কাঁচাবাজার কালিয়াকৈর রোড", "user": "bguser30", "officer": 4523, "lat": 23.882947, "lng": 90.08253, "segment": "BRONZE", "county": "Manikganj"},
-        {"kvt": 1640, "type": "TT", "name": "ভাই ভাই স্টোর", "address": "গোলড়া কাঁচাবাজার", "user": "bguser30", "officer": 4523, "lat": 23.881775, "lng": 90.081827, "segment": "BRONZE", "county": "Manikganj"},
-        {"kvt": 1645, "type": "TT", "name": "জামান ব্রাদার্স", "address": "গোলড়া বাসস্ট্যান্ড কাঁচাবাজার", "user": "bguser30", "officer": 4523, "lat": 23.880352, "lng": 90.081878, "segment": "BRONZE", "county": "Manikganj"},
-        {"kvt": 1648, "type": "TT", "name": "আল্লাহর দান ট্রেডার্স", "address": "গোলড়া বাসস্ট্যান্ড কাঁচাবাজার", "user": "bguser30", "officer": 4523, "lat": 23.880482, "lng": 90.081977, "segment": "BRONZE", "county": "Manikganj"}
-        /* বাকি সকল ২২৪ টি ডাটা একইভাবে ওয়েবসাইটটিতে সংরক্ষিত থাকবে */
-    ];
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Data from Excel
+        const outlets = [
+            {"kvt":"179","type":"TT","name":"আনন্দা স্টোর","address":"স্বর্ণকারপট্টি ১১  শোরনোকারপট্টি","user":"bguser30","officer":4523,"lat":23.8588083333333,"lng":90.0081366666667,"segment":"SILVER","county":"Manikganj"},
+            {"kvt":"363","type":"TT","name":"লুকমান স্টোর","address":"শ্রীখণ্ডিয়া মোল্লা মার্কেট  মোললা মার্কেট","user":"bguser30","officer":4523,"lat":23.9057283333333,"lng":90.31468,"segment":"SILVER","county":"Dhaka"},
+            {"kvt":"364","type":"TT","name":"ভাই ভাই ভ্যারাইটিজ স্টোর","address":"শ্রীখণ্ডিয়া মোল্লা মার্কেট  মোললা মার্কেট","user":"bguser30","officer":4523,"lat":23.9063516666667,"lng":90.314115,"segment":"SILVER","county":"Dhaka"},
+            {"kvt":"411","type":"TT","name":"সিয়াম জেনারেল স্টোর","address":"শ্রীখণ্ডিয়া মোল্লা মার্কেট  মোললা মার্কেট","user":"bguser30","officer":4523,"lat":23.9062333333333,"lng":90.31405,"segment":"SILVER","county":"Dhaka"},
+            {"kvt":"412","type":"TT","name":"শামীম স্টোর","address":"শ্রীখণ্ডিয়া বাজার  শ্রীখোনডিয়া বাজার","user":"bguser30","officer":4523,"lat":23.9080783333333,"lng":90.3101566666667,"segment":"SILVER","county":"Dhaka"},
+            {"kvt":"413","type":"TT","name":"ইসমাইল স্টোর","address":"শ্রীখণ্ডিয়া বাজার  শ্রীখোনডিয়া বাজার","user":"bguser30","officer":4523,"lat":23.907955,"lng":90.3103733333333,"segment":"SILVER","county":"Dhaka"},
+            {"kvt":"414","type":"TT","name":"মাসুদ কনফেকশনারি","address":"শ্রীখণ্ডিয়া বাজার  শ্রীখোনডিয়া বাজার","user":"bguser30","officer":4523,"lat":23.90772,"lng":90.3102433333333,"segment":"SILVER","county":"Dhaka"},
+            {"kvt":"415","type":"TT","name":"ইউসুফ স্টোর","address":"শ্রীখণ্ডিয়া বাজার  শ্রীখোনডিয়া বাজার","user":"bguser30","officer":4523,"lat":23.9077283333333,"lng":90.3100866666667,"segment":"SILVER","county":"Dhaka"},
+            {"kvt":"416","type":"TT","name":"সাদিয়া স্টোর","address":"শ্রীখণ্ডিয়া স্কুল রোড  শ্রীখোনডিয়া স্কূল রোদ","user":"bguser30","officer":4523,"lat":23.9067566666667,"lng":90.30906,"segment":"SILVER","county":"Dhaka"},
+            {"kvt":"417","type":"TT","name":"মেসার্স সততা ট্রেডার্স","address":"শ্রীখণ্ডিয়া মোড়  শ্রীখোনডিয়া মোর","user":"bguser30","officer":4523,"lat":23.9064733333333,"lng":90.3075533333333,"segment":"SILVER","county":"Dhaka"},
+            {"kvt":"418","type":"TT","name":"সুজন ভ্যারাইটিজ স্টোর","address":"শ্রীখণ্ডিয়া কদম তলা  শ্রীখোনডিয়া কদম তলা","user":"bguser30","officer":4523,"lat":23.90349,"lng":90.30605,"segment":"SILVER","county":"Dhaka"},
+            {"kvt":"419","type":"TT","name":"মেসার্স সততা ভ্যারাইটিজ স্টোর","address":"শ্রীখণ্ডিয়া দক্ষিণপাড়া  শ্রীখোনডিয়া ডকখিনপারা","user":"bguser30","officer":4523,"lat":23.9031633333333,"lng":90.3045266666667,"segment":"SILVER","county":"Dhaka"},
+            {"kvt":"420","type":"TT","name":"মা মণি স্টোর","address":"শ্রীখণ্ডিয়া দক্ষিণপাড়া  শ্রীখোনডিয়া ডকখিনপারা","user":"bguser30","officer":4523,"lat":23.9022466666667,"lng":90.30335,"segment":"SILVER","county":"Dhaka"},
+            {"kvt":"421","type":"TT","name":"মোস্তফা জেনারেল স্টোর","address":"শ্রীখণ্ডিয়া দক্ষিণপাড়া  শ্রীখোনডিয়া ডকখিনপারা","user":"bguser30","officer":4523,"lat":23.9011783333333,"lng":90.302305,"segment":"SILVER","county":"Dhaka"},
+            {"kvt":"422","type":"TT","name":"আকাশ ট্রেডার্স","address":"তেঁতুলঝোড়া মোড়  তেতুলঝরা মোর","user":"bguser30","officer":4523,"lat":23.8967916666667,"lng":90.3015483333333,"segment":"SILVER","county":"Dhaka"},
+            {"kvt":"423","type":"TT","name":"ভাই ভাই জেনারেল স্টোর","address":"তেঁতুলঝোড়া মোড়  তেতুলঝরা মোর","user":"bguser30","officer":4523,"lat":23.89643,"lng":90.300645,"segment":"SILVER","county":"Dhaka"},
+            {"kvt":"424","type":"TT","name":"রাজিব জেনারেল স্টোর","address":"তেঁতুলঝোড়া মাদ্রাসা রোড  তেতুলঝরা মাডরাসা রোদ","user":"bguser30","officer":4523,"lat":23.8961783333333,"lng":90.2974416666667,"segment":"SILVER","county":"Dhaka"},
+            {"kvt":"425","type":"TT","name":"হাজেরা জেনারেল স্টোর","address":"তেঁতুলঝোড়া মাদ্রাসা রোড  তেতুলঝরা মাডরাসা রোদ","user":"bguser30","officer":4523,"lat":23.896225,"lng":90.2965416666667,"segment":"SILVER","county":"Dhaka"},
+            {"kvt":"426","type":"TT","name":"হাবিব স্টোর","address":"তেঁতুলঝোড়া স্কুল রোড  তেতুলঝরা স্কূল রোদ","user":"bguser30","officer":4523,"lat":23.89531,"lng":90.2952816666667,"segment":"SILVER","county":"Dhaka"},
+            {"kvt":"427","type":"TT","name":"সিয়াম স্টোর","address":"তেঁতুলঝোড়া স্কুল রোড  তেতুলঝরা স্কূল রোদ","user":"bguser30","officer":4523,"lat":23.8931116666667,"lng":90.2929283333333,"segment":"SILVER","county":"Dhaka"}
+        ];
 
-    // Plotting all pins on map
-    outlets.forEach(function(item) {
-        if(item.lat && item.lng) {
-            var googleMapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + item.lat + ',' + item.lng;
-            
-            var popupContent = `
-                <div class="popup-card">
-                    <h3>${item.name}</h3>
-                    <p><span class="badge">${item.type}</span> <span class="badge" style="background:#fef7e0; color:#b06000;">${item.segment}</span></p>
-                    <p><b>ঠিকানা:</b> ${item.address}, ${item.county}</p>
-                    <p><b>KVT NO:</b> ${item.kvt}</p>
-                    <p><b>Officer Code:</b> ${item.officer} (${item.user})</p>
-                    <a href="${googleMapsUrl}" target="_blank" class="btn-direction">🗺️ এখানে যাওয়ার দিকনির্দেশনা (Google Maps)</a>
-                </div>
-            `;
+        // Map Initialize (Bangladesh Centered)
+        const map = L.map('map').setView([23.85, 90.15], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
 
-            L.marker([item.lat, item.lng])
-                .addTo(map)
-                .bindPopup(popupContent);
+        let markersGroup = L.layerGroup().addTo(map);
+        let userMarker = null;
+        let userCoords = null;
+
+        // Populate Counties Filter
+        const countySelect = document.getElementById('countyFilter');
+        const counties = [...new Set(outlets.map(o => o.county))];
+        counties.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            countySelect.appendChild(opt);
+        });
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
         }
-    });
-</script>
 
+        function renderOutlets(data) {
+            markersGroup.clearLayers();
+            const listEl = document.getElementById('outlet-list');
+            listEl.innerHTML = '';
+
+            data.forEach((item) => {
+                // Map Marker
+                const marker = L.marker([item.lat, item.lng]);
+                const popupText = `
+                    <div class="popup-content">
+                        <div class="popup-title">${item.name}</div>
+                        <b>Type:</b> ${item.type}<br>
+                        <b>Address:</b> ${item.address}<br>
+                        <b>County:</b> ${item.county}<br>
+                        <b>Segment:</b> ${item.segment}<br>
+                        <b>KVT NO:</b> ${item.kvt}<br>
+                        <b>Officer Code:</b> ${item.officer}<br>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${item.lat},${item.lng}" target="_blank" class="popup-btn">
+                            <i class="fa-solid fa-diamond-turn-right"></i> নেভিগেট করুন (Google Maps)
+                        </a>
+                    </div>
+                `;
+                marker.bindPopup(popupText);
+                markersGroup.addLayer(marker);
+
+                // Sidebar Card
+                const card = document.createElement('div');
+                card.className = 'outlet-card';
+                card.onclick = () => {
+                    map.setView([item.lat, item.lng], 16);
+                    marker.openPopup();
+                };
+
+                let distHtml = '';
+                if (item.distance !== undefined) {
+                    distHtml = `<span class="distance-badge"><i class="fa-solid fa-location-dot"></i> ${item.distance.toFixed(2)} km দূরে</span>`;
+                }
+
+                card.innerHTML = `
+                    <div class="outlet-title">${item.name}</div>
+                    <div class="outlet-meta"><b>ঠিকানা:</b> ${item.address}</div>
+                    <div class="outlet-meta"><b>কাউন্টি:</b> ${item.county} | <b>টাইপ:</b> ${item.type}</div>
+                    ${distHtml}
+                `;
+                listEl.appendChild(card);
+            });
+        }
+
+        function filterData() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const selectedCounty = document.getElementById('countyFilter').value;
+
+            let filtered = outlets.filter(item => {
+                const matchSearch = item.name.toLowerCase().includes(search) || item.address.toLowerCase().includes(search);
+                const matchCounty = selectedCounty === "" || item.county === selectedCounty;
+                return matchSearch && matchCounty;
+            });
+
+            if (userCoords) {
+                filtered.forEach(item => {
+                    item.distance = calculateDistance(userCoords.lat, userCoords.lng, item.lat, item.lng);
+                });
+                filtered.sort((a, b) => a.distance - b.distance);
+            }
+
+            renderOutlets(filtered);
+        }
+
+        function getUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    userCoords = {
+                        lat: pos.coords.latitude,
+                        lng: pos.coords.longitude
+                    };
+
+                    if (userMarker) map.removeLayer(userMarker);
+                    
+                    userMarker = L.circleMarker([userCoords.lat, userCoords.lng], {
+                        radius: 9,
+                        color: '#ffffff',
+                        fillColor: '#1a73e8',
+                        fillOpacity: 1,
+                        weight: 3
+                    }).addTo(map).bindPopup("<b>আপনার বর্তমান অবস্থান</b>").openPopup();
+
+                    map.setView([userCoords.lat, userCoords.lng], 13);
+                    filterData();
+                }, () => {
+                    alert('আপনার লোকেশন অ্যাক্সেস পাওয়া যায়নি। ব্রাউজারের Location Permission অন করুন।');
+                });
+            } else {
+                alert('আপনার ব্রাউজার Geolocation সমর্থন করে না।');
+            }
+        }
+
+        // Initial Render
+        renderOutlets(outlets);
+    </script>
 </body>
 </html>
